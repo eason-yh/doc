@@ -111,8 +111,12 @@ def index():
 本次 Flask-WFT 记录到此，下面研究下 WTF 表单的自定义报错，csrftoken 在网页的代码中会显示出来
 在研究下 openid ，至现在都不知道是什么东东
 
-参考文章
+前端包含 bootstrap，感谢：jolly23.com
+css样式，js，等还需要学习
 
+
+参考文章  http://www.pythondoc.com/flask-mega-tutorial/webforms.html
+同时参考  https://blog.csdn.net/jmilk/article/details/53539710
 
 
 
