@@ -1,1 +1,166 @@
-123
+一直心里都有一个写项目的打算，但是真的才疏学浅，又不知道从哪里下手，偶然间在网上搜索发现了一片文章，正和我心意，直接贴出地址吧
+http://www.pythondoc.com/flask-mega-tutorial/index.html
+
+我完全就是跟随着这篇文章进行的项目，目前也是参照文章一步一步的在完成，这里记录一下使用的模块和遇到的一些问题。
+
+项目目标
+
+用户管理，包括管理登录，会话，用户角色，权限以及用户头像。
+数据库管理，包括迁移处理。
+Web 表单支持，包括对各个字段的验证。
+分页处理。
+全文搜索。
+用户邮件提醒。
+HTML 模板。
+支持多国语言。
+缓存以及其它性能优化技术。
+开发以及生产服务器的调试技巧。
+在生产服务器上安装。
+
+环境介绍
+我并没有使用文章中所说的虚拟环境，而是使用了 pycharm 这个非常好用的 IDE。
+文章的前段部分主要是讲解一些初级的教程，此文章出现的第一个问题就是讲了 openid 但是在下载的包里面没有使用，导致后面的项目差点脱节
+
+目前使用到的模块介绍
+
+表单：flask_wtf
+需要配置秘钥，创建文件 config.py，秘钥最好起一个复杂的
+app.config['SECRET_KEY'] = 'hard to guess string'
+每一个表单都需要继承FlakForm（版本不同，有的是Form）
+Form类中定义了表单中的一组字段，每个字段用对象表示 
+字段对象附属多个验证函数
+验证函数： 
+用来验证用户提交的输入值是否符合要求
+
+
+from flask_wtf import FlaskForm
+from wtforms import StringField, BooleanField, PasswordField, SubmitField, TextAreaField
+from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
+from app.models import User
+from werkzeug.security import generate_password_hash, check_password_hash
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember Me')
+    submit = SubmitField(u'登陆')
+
+
+第一个字段的说明
+
+StringField            文本字段
+TextAreaFioeld         多行文本字段
+PasswordField          密码文本字段
+HiddenField            隐藏文本字段
+DateField              文本字段，值为 datetime.date 格式
+DateTimeField          文本字段，值为 datetime.datetime 格式
+IntegerField           文本总段，值为整数
+DecimalField           文本字段，值为 decimal.Decimal
+FloatField             文本字段，值为浮点数
+BooleanField           复选框，值为 True 和 False
+RadioField             一组单选框
+SelectField            下拉列表
+FileField              文件上传字段
+SubmitField            表单提交按钮
+FormField              把表单座位字段嵌入另一个表单
+FieldList              一组指定类型的字段
+SelectMultipleField    下拉列表，可选择多个值
+
+验证的函数：
+
+email            验证电子邮件地址
+EqualTo          比较两个字段的值，常用于输入两次密码
+IPAddress        验证IPv4网络地址
+Length           验证输入字符串的长度
+NumberRange      验证输入的值在数字的范围内
+Optional         无输入值时跳过其他验证函数
+Required         确保字段中有数据
+Regexp           使用正则表达式验证输入值
+URL              验证URL
+AnyOf            确保输入值在可选值列表中
+NoneOf           确保输入值不在可选列表中
+
+表单在Html中的用法
+
+<form method ="POST">
+    {{form.hidden_tag()}}
+    {{form.name.label}}{{form.name()}}
+    {{form.submit()}}
+</form>
+
+在表单实例中传入参数的方法
+
+{{form.name(id='my-text-field')}}
+
+在表单中加入 bootstrap 渲染样式
+使用bootstrap中预先定义好的表单样式渲染整个flask-wtf表单
+
+{% import "bootstrap/wtf.html" as wtf%}
+{{wtf.quick_form(form)}}
+
+在 views.py 视图函数中调用的方法
+
+@app.route('/', method=['GET'])
+def index():
+    name = None
+    form = NameForm()#创建表单实例
+    if form.validate_on_submit():#判断表单是否满足条件，满足为 True 不满足为False
+        name = form.name.data
+        return "返回正常的页面和值"
+    retun "返回当前页面"
+
+本次 Flask-WFT 记录到此，下面研究下 WTF 表单的自定义报错，csrftoken 在网页的代码中会显示出来
+在研究下 openid ，至现在都不知道是什么东东
+
+参考文章
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
