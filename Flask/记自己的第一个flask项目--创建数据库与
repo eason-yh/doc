@@ -1,0 +1,201 @@
+
+一直在看 flask 的官方文档，创建数据库总是建不出来，可能是我没有深入的研究
+
+在看了其他文章之后，我发现了一个方法，可以像 django 那样创建数据库，回滚数据库，和更新数据库，我觉得这个很实用
+
+做一下数据库的环境配置，创建一个 config.py 文件，这个文件保存你所有配置文件
+
+import os
+basedir = os.path.abspath(os.path.dirname(__file__))
+SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
+SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+
+这里只加入了数据库的配置文件，你还可以加入下面这些文件等一些参数和变量
+
+DEBUG = True
+CSRF_ENABLED = True
+SECRET_KEY = 'you-will-never-guess'
+
+然后在 __init__.py 中初始化数据库
+
+from flask import Flask
+from flask.ext.sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config.from_object('config')
+db = SQLAlchemy(app)
+
+
+创建数据库，第一你需要一个数据库的文件，里面编写了数据库的字段和信息
+
+from app import db
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    nickname = db.Column(db.String(64), index = True, unique = True)
+    email = db.Column(db.String(120), index = True, unique = True)
+
+    def __repr__(self):
+        return '<User %r>' % (self.nickname)
+
+到这里基本的数据库已经进本完成，下面开始编写创建数据库的脚本（db_create.py）
+migrate的安装是：pip install sqlalchemy-migrate
+
+#!flask/bin/python
+from migrate.versioning import api
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+from app import db
+import os.path
+db.create_all()
+if not os.path.exists(SQLALCHEMY_MIGRATE_REPO):
+    api.create(SQLALCHEMY_MIGRATE_REPO, 'database repository')
+    api.version_control(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+else:
+    api.version_control(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO, api.version(SQLALCHEMY_MIGRATE_REPO))
+
+脚本的运行就是调用 sqlalchemy 的 api 创建了一个数据库，并创建了存储数据文件的目录 db_repository
+使用 flask 文档中创建数据库的方法，也很简单的
+在 __init__.py 文件中加入：
+
+db = SQLAlchemy(app)
+#请注意在创建数据库之前，必须先导入表
+from Model import model
+db.create_all()
+
+然后再运行程序之后，就会有数据库生成
+经过我测试，在数据表中新加入字段，然后再运行是不生效的，只能将原有的数据库删除，在生成新的数据库才可以
+
+不过，可以使用下面的脚本来进行数据迁移（db_migrate.py）
+
+#!flask/bin/python
+import imp
+from migrate.versioning import api
+from app import db
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+migration = SQLALCHEMY_MIGRATE_REPO + ('/versions/%03d_migration.py' % (v+1))
+tmp_module = imp.new_module('old_model')
+old_model = api.create_model(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+exec(old_model, tmp_module.__dict__)
+script = api.make_update_script_for_model(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO, tmp_module.meta, db.metadata)
+open(migration, "wt").write(script)
+api.upgrade(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+print('New migration saved as ' + migration)
+print('Current database version: ' + str(v))
+
+脚本的内容为：
+SQLAlchemy-migrate 迁移的方式就是比较数据库(在本例中从 app.db 中获取)与我们模型的结构(从文件 app/models.py 获取)。两者间的不同将会被记录成
+一个迁移脚本存放在迁移仓库中。迁移脚本知道如何去迁移或撤销它，所以它始终是可能用于升级或降级一个数据库。
+
+然而在使用上面的脚本自动地完成迁移的时候也不是没有问题的，我见过有时候它很难识别新老格式的变化。为了让 SQLAlchemy-migrate 容易地识别出变化，
+我绝不会重命名存在的字段，我仅限于增加或者删除模型或者字段，或者改变已存在字段的类型。当然我一直会检查生成的迁移脚本，确保它是正确。
+
+毋庸置疑你不应该在没有备份下去尝试迁移数据库。当然也不能在生产环境下直接运行迁移脚本，必须在开发环境下确保迁移运转正常。
+脚本会打印出迁移脚本存储在哪里，也会打印出目前数据库版本。空数据库的版本是0，在我们迁移到包含用户的数据库后，版本为1.
+
+数据库升级脚本（db_upgrade.py）
+
+#!flask/bin/python
+from migrate.versioning import api
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+api.upgrade(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+print('Current database version: ' + str(v))
+
+数据库回退脚本：（db_downgrade.py）
+
+#!flask/bin/python
+from migrate.versioning import api
+from config import SQLALCHEMY_DATABASE_URI
+from config import SQLALCHEMY_MIGRATE_REPO
+v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+api.downgrade(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO, v - 1)
+v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
+print('Current database version: ' + str(v))
+
+其实我们用的回退的脚本比较少，更新的脚本比较多，其实迁移我感觉和更新差不多，所以我一般使用迁移的脚本来做更新
+
+数据库表关系，一对多关系
+
+例如现在有一个用户表和一个文章表，那么一个用户可以有多个文章，这就需要在用户与文章之间做一个一对多的关系
+
+from app import db
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nickname = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
+
+    def __repr__(self):
+        return '<User %r>' % (self.nickname)
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    body = db.Column(db.String(140))
+    timestamp = db.Column(db.DateTime)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __repr__(self):
+        return '<Post %r>' % (self.body)
+
+方式就是通过在 posts 增加一个字段，这个字段包含了编写 blog 的用户的 id，这个 id 称为一个外键。连接于 users 表中的 id 与 posts 表中的 user_id
+这种关系称为一对多
+在用户表中的posts字段被构建成一个 relationship 字段，这并不是一个实际的数据库字段，它不会显示在用户表中，我们可以通过 user.posts 找到文章表中的信息
+
+多对多的关系目前还没有用到，用到之后还在这里做补充
+##############
+
+##############
+
+查询数据库方法
+
+需要先导入对象表
+
+from 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
