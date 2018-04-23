@@ -155,12 +155,48 @@ class Post(db.Model):
 
 需要先导入对象表
 
-from 
+from .models import User, Post
+user = User.query.filter_by(email=email).first()
 
+调用一对多字段的用法
+#我理解这个为反向调用
+content=User.query.filter_by(username=user.username).first().posts.all()
+#正向调用
+文章表查到用户表
+a=Post.query.filter_by(user_id="1").first().author
+再往下调用也是可以的，这样就又调回到文章表
+a=Post.query.filter_by(user_id="1").first().author.posts.first()
 
+增加数据
+user = User(username=form.username.data, email=form.email.data, password_hash=generate_password_hash(form.password.data),
+nickname=form.nickname.data)
+db.session.add(user)
+db.session.commit()
+这里的密码使用了加密算法
 
+更细数据
+>>> a
+<User u'qwe'
 
+a=User.query.filter_by(id=2).first()
+a.username="terry"
+b.session.commit()
 
+>>> a.username
+u'terry'
+
+删除数据
+
+>>> a=User.query.filter_by(id=4).first()
+>>> a
+<User u'\u7684\u8428\u8fbe\u662f'
+db.session.delete(a)
+db.session.commit()
+
+>>> a=User.query.filter_by(id=4).first()
+>>> a
+>>> print a
+None
 
 
 
