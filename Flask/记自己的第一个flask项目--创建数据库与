@@ -10,6 +10,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
 
+连接数据库也可以写成：
+sqlite ： sqlite:////absolute/path/to/foo.db   这里如果是在windows下斜杠需要写成 \ 并且是 \\ 两个
+mysql ： mysql+mysqldb://scott:tiger@localhost/foo
+
 这里只加入了数据库的配置文件，你还可以加入下面这些文件等一些参数和变量
 
 DEBUG = True
