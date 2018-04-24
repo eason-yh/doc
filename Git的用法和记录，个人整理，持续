@@ -1,0 +1,92 @@
+首先你需要有一个 GitHub 的账号，并在上面已经创建了一个 repository（存储库）
+
+你的电脑需要安装 Git 客户端，我这里只写着一个，是因为我只用了这个，其他的如 Git Gui 我没有用，所以这里只写在 Git Bash下的用法。注：Windows下
+
+GitHub地址：https://github.com
+Git地址：https://git-scm.com/
+Git 下载地址：https://git-scm.com/download/win  Windows版本，默认会自动下载适合你系统的版本
+
+安装完 Git 之后，需要在你的 Github上配置计算机的认证秘钥（sshkey），也可以使用密码，不过配置秘钥使用起来会比密码更方便。
+生成 sshkey 步骤：以下是在命令行下操作的
+
+git config --global user.name "名字"   #这里请输入你的名子，名字可以随意，这里主要是追踪谁提交的代码
+git config --global user.email "邮箱"  #同名字
+ssh-keygen.ext -t rsa -C "邮箱"        #开始生成秘钥，剩下的直接三次回车
+
+一般秘钥生成会在电脑登录用户的家目录下：C:\Users\用户\.ssh
+下一步需要在 GitHub 账号下添加公钥：
+步骤如下：登录你的 GitHub 账号，settings -->> SSH and GPG keys -->> New SSH key -->>填入名称和id_rsa.pub中的内容，保存成功后就可以拉取代码了
+
+以下是在 Git Bash 下操作的内容，在桌面创建一个新的文件夹，右键点击 Git Bash Here，在弹出的命令行中输入
+
+git clone git@github.com:**/**.git  #后面请加上自己的 GitHub 的地址，就会把 GitHub 上的内容拉取到本地之后你就可以对本地的文件进行编辑了
+git add .  #是将当前更改或者新增的文件加入到Git的索引中，加入到Git的索引中就表示记入了版本历史中，这也是提交之前所需要执行的一步
+git commit -m "信息"  #提交当前工作空间的修改内容
+git push  #将本地commit的代码更新到远程版本库中
+git pull  #从其他的版本库（既可以是远程的也可以是本地的）将代码更新到本地
+此次操作基本完成，这也是一些 Git 的常规操作了，会经常使用到的
+
+
+1) 远程仓库相关命令
+检出仓库：        $ git clone git://github.com/jquery/jquery.git
+查看远程仓库：$ git remote -v
+添加远程仓库：$ git remote add [name] [url]
+删除远程仓库：$ git remote rm [name]
+修改远程仓库：$ git remote set-url --push [name] [newUrl]
+拉取远程仓库：$ git pull [remoteName] [localBranchName]
+推送远程仓库：$ git push [remoteName] [localBranchName]
+
+2）分支(branch)操作相关命令
+查看本地分支：$ git branch
+查看远程分支：$ git branch -r
+创建本地分支：$ git branch [name] ----注意新分支创建后不会自动切换为当前分支
+切换分支：$ git checkout [name]
+创建新分支并立即切换到新分支：$ git checkout -b [name]
+删除分支：$ git branch -d [name] ---- -d选项只能删除已经参与了合并的分支，对于未有合并的分支是无法删除的。如果想强制删除一个分支，可以使用-D选项
+合并分支：$ git merge [name] ----将名称为[name]的分支与当前分支合并
+创建远程分支(本地分支push到远程)：$ git push origin [name]
+删除远程分支：$ git push origin :heads/[name] 或 $ gitpush origin :[name] 
+*创建空的分支：(执行命令之前记得先提交你当前分支的修改，否则会被强制删干净没得后悔)
+$git symbolic-ref HEAD refs/heads/[name]
+$rm .git/index
+$git clean -fdx
+
+3）版本(tag)操作相关命令
+查看版本：$ git tag
+创建版本：$ git tag [name]
+删除版本：$ git tag -d [name]
+查看远程版本：$ git tag -r
+创建远程版本(本地版本push到远程)：$ git push origin [name]
+删除远程版本：$ git push origin :refs/tags/[name]
+合并远程仓库的tag到本地：$ git pull origin --tags
+上传本地tag到远程仓库：$ git push origin --tags
+创建带注释的tag：$ git tag -a [name] -m 'yourMessage'
+
+4）忽略一些文件、文件夹不提交
+在仓库根目录下创建名称为“.gitignore”的文件，写入不需要的文件夹名或文件，每个元素占一行即可，如
+target
+bin
+*.db
+ 
+ 
+三、 Git 命令详解
+ git init 和 git remote：这种方式稍微复杂一些，当你本地创建了一个工作目录，你可以进入这个目录，使用'git init'命令进行初始化；Git以后就会对该目录下的文件进行版本控制，这时候如果你需要将它放到远程服务器上，可以在远程服务器上创建一个目录，并把可访问的URL记录下来，此时你就可以利用'git remote add'命令来增加一个远程服务器端，
+例如：git  remote  add  origin  git://github.com/someone/another_project.git
+上面的命令就会增加URL地址为'git: //github.com/someone/another_project.git'，名称为origin的远程服务器，以后提交代码的时候只需要使用 origin别名即可
+现在我们有了本地和远程的版本库，让我们来试着用用Git的基本命令：
+git pull：从其他的版本库（既可以是远程的也可以是本地的）将代码更新到本地，例如：'git pull origin master'就是将origin这个版本库的代码更新到本地的master主枝，该功能类似于SVN的update
+git add：是将当前更改或者新增的文件加入到Git的索引中，加入到Git的索引中就表示记入了版本历史中，这也是提交之前所需要执行的一步，例如'git add app/model/user.rb'就会增加app/model/user.rb文件到Git的索引中，该功能类似于SVN的add
+git rm：从当前的工作空间中和索引中删除文件，例如'git rm app/model/user.rb'，该功能类似于SVN的rm、del
+git commit：提交当前工作空间的修改内容，类似于SVN的commit命令，例如'git commit -m story #3, add user model'，提交的时候必须用-m来输入一条提交信息，该功能类似于SVN的commit
+git push：将本地commit的代码更新到远程版本库中，例如'git push origin'就会将本地的代码更新到名为orgin的远程版本库中
+git log：查看历史日志，该功能类似于SVN的log
+git revert：还原一个版本的修改，必须提供一个具体的Git版本号，例如'git revert bbaf6fb5060b4875b18ff9ff637ce118256d6f20'，Git的版本号都是生成的一个哈希值
+ 
+上面的命令几乎都是每个版本控制工具所公有的，下面就开始尝试一下Git独有的一些命令：
+git branch：对分支的增、删、查等操作，例如'git branch new_branch'会从当前的工作版本创建一个叫做new_branch的新分支，'git branch -D new_branch'就会强制删除叫做new_branch的分支，'git branch'就会列出本地所有的分支
+git checkout：Git的checkout有两个作用，其一是在不同的branch之间进行切换，例如'git checkout new_branch'就会切换到new_branch的分支上去；另一个功能是还原代码的作用，例如'git checkout app/model/user.rb'就会将user.rb文件从上一个已提交的版本中更新回来，未提交的内容全部会回滚
+
+参考文章地址：https://www.cnblogs.com/baby-blue/p/6130569.html
+推荐:https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000
+
+
