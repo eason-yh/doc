@@ -1,5 +1,7 @@
 一直心里都有一个写项目的打算，但是真的才疏学浅，又不知道从哪里下手，偶然间在网上搜索发现了一片文章，正和我心意，直接贴出地址吧
-http://www.pythondoc.com/flask-mega-tutorial/index.html
+
+参考文章  http://www.pythondoc.com/flask-mega-tutorial/webforms.html
+同时参考  https://blog.csdn.net/jmilk/article/details/53539710
 
 我完全就是跟随着这篇文章进行的项目，目前也是参照文章一步一步的在完成，这里记录一下使用的模块和遇到的一些问题。
 
