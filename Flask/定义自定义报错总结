@@ -1,0 +1,17 @@
+flask-login 自定义错误总结
+
+login_manage 的定义错误
+
+lm = LoginManager()
+lm.login_message=u'对不起，您还没有登录'
+
+flask的form表单报错
+
+from flask_wtf import FlaskForm
+需要在使用的方法中加入报错
+class RegistrationForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(u"请输入需要注册的用户名")])
+    email = StringField('Email', validators=[DataRequired(u"请输入邮箱地址"), Email(u"请输入正确的邮箱地址")])
+    nickname = StringField('Nickname', validators=[DataRequired(u"请输入需要注册的邮箱")])
+    password = PasswordField('Password', validators=[DataRequired(u"请输入密码")])
+    password2 = PasswordField('Repeat Password', validators=[DataRequired(u"请再一次输入密码"), EqualTo('password')])
