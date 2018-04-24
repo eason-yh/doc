@@ -1,0 +1,326 @@
+参考文章：https://www.cnblogs.com/alima/p/5818852.html
+
+
+
+flask-Login介绍
+
+它会：
+
+①将活跃用户的ID储存在缓存(Session)中，让登录和注销更加简单。
+②让你对登入（或登出）的用户限制浏览不同的视图
+③处理略棘手的“记住用户”功能
+④帮助保护使用用户的缓存(Session)，以免被恶意盗用
+⑤可能与Flask-Principal或其他授权扩展，在以后的工作中进行整合
+
+但是，它不会：
+
+①强制让你使用一个特定的数据库或者其他的存储方法。你可以完全负责你的用户时如何加载的。
+②限制你使用用户名和密码，OpenID或是其他的认证方法。
+③处理“登入或登出”以外的权限
+④处理用户注册或者账户恢复
+
+总结，flask-Login包只管理用户登入登出的缓存(Session)管理，而不做过多的超出自己权限的功能。
+
+LoginManager构造函数
+
+
+'''
+
+#： 提供了一个游客用户，该用户是在没有登录状态下时使用
+self.anonymous_user = AnonymousUserMixin
+
+#： 提供当用户需要登录时的重定向页面参数
+#： （此处也可以是一个绝对路径）
+self.login_view = None
+
+#： 提供一个蓝图，当用户需要登录时的重定向页面
+#： 如果键值为空，则默认重定向到login_view下的地址
+self.blueprint_login_views = {}
+
+#： 这条消息将flash在重定向页面上
+self.login_message = LOGIN_MESSAGE
+
+#: login_message的类型，默认LOGIN_MESSAGE_CATEGORY，可自定义
+self.login_message_category = LOGIN_MESSAGE_CATEGORY
+
+#： 如果需要一个活跃的登录，使用户重定向到其他界面，重新验证登录
+self.refresh_view = None
+
+#： 这条消息将flash到用户重新验证的界面上
+self.needs_refresh_message = REFRESH_MESSAGE
+
+#: needs_refresh_message的类型，默认REFRESH_MESSAGE_CATEGORY，可自定义
+self.needs_refresh_message_category = REFRESH_MESSAGE_CATEGORY
+
+#： 缓存(Session)的保护等级
+#： 有三种等级，分别为： 'basic'(默认),'strong','None'(关闭缓存保护功能)
+self.session_protection = 'basic'
+
+#： 如果存在，则用来转换使用login_message和needs_refresh_message
+self.localize_callback = None
+
+#： 检索用户对象回调
+self.user_callback = None
+
+#： 未经授权的用户回调（未登录状态）
+self.unauthorized_callback = None
+
+#： 未经授权的用户回调（需要活跃登录状态）
+self.needs_refresh_callback = None
+
+#： 默认属性以检索用户的Unicode标识(源码注释在flask_login.config文件下)
+self.id_attribute = ID_ATTRIBUTE
+
+#： 用于回调检索用户对象。（设置令牌状态）
+self.header_callback = None
+
+#： 用于回调检索用户对象。（设置Flask请求对象状态）
+self.request_callback = None
+
+#： 如果应用程序(app)为空，则默认创建一个空的LoginManager实例
+if app is not None:
+    self.init_app(app, add_context_processor)
+ 
+ 
+    
+API：init_app()
+
+init_app(self, app, add_context_processor=True)
+配置的应用程序。这将注册一个'after_request`调用，并附加这个`LoginManager`把它作为'app.login_manager`。
+
+这里渗透一下，三个flask架构自带的装饰器。
+
+before_request :在请求收到之前绑定一个函数做一些事情。
+
+after_request: 每一个请求之后绑定一个函数，如果请求没有异常。
+
+teardown_request: 每一个请求之后绑定一个函数，即使遇到了异常。
+
+重新定制你的用户类
+在之前的章节中，分别定义了不同的用户类，flask-login包控制登入登出需要如下属性。
+
+① is_authenticated
+
+当用户通过验证时，返回有效凭证True。
+
+② is_active
+
+一个活动用具有1)通过验证 2)账户也已激活 3)未被停用 4)也不符合任何的应用拒绝登入条件，返回True。不活动的账号无法登入。
+
+③ is_anonyous
+
+如果是一个匿名用户，返回True，如果是登录用户则返回False
+
+④ get_id()
+
+返回一个能唯一识别用户的，并能用于从user_loader回调中加载用户的ID，这个ID必须是Unicode。
+
+如果你对你的新定制的用户类没有其他的要求，你可以继承flask_login.mixins下定义的UserMixin作为你的用户类的父类。
+
+flask-login下的API详解
+①　配置登录
+
+API：@user_loader
+
+解析：这个API设置一个回调，用于从缓存中加载用户登录信息。你构造的函数需要设置一个user ID并且返回一个用户实体。如果用户不存在则返回None。
+
+使用举例（简单实现了一个加载用户的操作，并没有对入口变量做判断）：
+
+复制代码
+
+@login_manager.user_loader
+def load_user(id):
+    user = User.query.filter_by(id=id).first()
+    return user
+
+API：@request_loader（@header_loader）
+
+解析：设置一个从flask请求加载用户的回调。你需要给函数一个Flask请求，函数返回用户实体，用户不存在则返回None。
+
+@login_manager.request_loader
+def load_user_from_request(request):
+
+    # first, try to login using the api_key url arg
+    api_key = request.args.get('api_key')
+    if api_key:
+        user = User.query.filter_by(api_key=api_key).first()
+        if user:
+            return user
+
+    # next, try to login using Basic Auth
+    api_key = request.headers.get('Authorization')
+    if api_key:
+        api_key = api_key.replace('Basic ', '', 1)
+        try:
+            api_key = base64.b64decode(api_key)
+        except TypeError:
+            pass
+        user = User.query.filter_by(api_key=api_key).first()
+        if user:
+            return user
+
+    # finally, return None if both methods did not login the user
+    return None
+
+
+API：anonymous_user
+
+解析：提供了一个游客用户，该用户是在没有登录状态下时使用
+
+使用实例：（你可以判断当前用户的is_anonymous属性，是不是True来看是不是随机用户）
+
+if current_user.is_anonymous == True
+②　未经授权的配置
+
+API: flask_login.login_view
+
+解析：当用户需要登录时，将用户重定向到的界面。
+
+使用举例（将非法登录强制重定向到登录界面）：
+
+login_manager.login_view = 'login'
+API: flask_login.login_message
+
+解析：当用户重定向时，flash出的消息。
+
+使用举例：
+
+login_manager.login_message = 'Please enter your account'
+API：@unauthorized_handler
+
+解析：如果你不想用默认的重定向定制你的登录，你可以在代码视图实体中显示的写出一个函数体，将@unauthorized_handler装饰器添加到函数体之上。
+这样做之后，当你用@login_required阻止用户非法登录，将执行我们新定义的函数体中的内容。
+
+使用举例（将非法登录强制重定向到登录界面）：
+
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    return redirect('/login')
+
+③需要活跃登录的配置
+
+API: flask_login.refresh_view
+
+解析：当用户需要活跃登录时，将用户重定向到的界面。
+
+使用举例（将非法登录强制重定向到登录界面）：
+login_manager.refresh_view = 'login'
+
+API: flask_login.needs_refresh_message
+
+解析：当需要活跃登录的用户重定向时，flash出的消息。
+使用举例：
+login_manager.needs_refresh_message = 'You need a fresh log in.Please enter your account' 
+
+API：@needs_refresh_handler
+
+解析：作用和unauthorized_handler类似，当你需要登录的用户是输入用户名密码登录时，而你又不想使用默认的重定向方法，那么，
+你可以显示的定义你自己处理函数。
+
+使用举例（将非活跃登录强制重定向到登录界面，并flash出消息）：
+
+@login_manager.needs_refresh_handler
+def refresh():
+    flash('You should log in!')
+    return logout()
+
+ ④登录机制
+ 
+API：flask_login.current_user
+解析：获取当前缓存中保存的用户帐户信息（一个当前用户的代理）
+
+API：flask_login.login_fresh()
+如果当前用户是活跃登录，则返回True。
+
+API：flask_login.login_user(user, remember=False, force=False,fresh=True)
+
+解析Ⅰ：登录用户。你需要向函数中传进一个用户对象。如果用户'is_active'属性为'Flase'，只有当'force'是'True'时才会允许登录。
+当登录成功后返回'True'，当失败时返回'False'。
+
+这里特别提一下函数参数'fresh'，当设置为'False'时，将登陆用户的缓存(Session)中标志为不是活跃登录。默认值为'True'
+
+举例：
+
+@app.route('/post')
+@login_required
+def post():
+    pass
+    
+解析Ⅱ：如果只有当前时刻你需要要求你的用户登录，你可以这样做：
+
+if not current_user.is_authenticated:
+    return current_app.login_manager.unauthorized()
+    
+实际上，将上边的代码添加到你的视图中去就可以达到要求了。
+当单体测试的时候它可以很方便的全局关闭认证。将'LOGIN_DISABLED'设置为True，装饰器就会被忽略了。
+
+API：flask_login.logout_user()
+
+解析：用户登出（你不需要通过实际用户）。这个函数同时会清除remember me中的cookie（如果存在的话）。
+作用就是清除一系列的cookie信息。
+
+API：flask_login.confirm_login()
+
+解析：函数将会将当前Sesslion设置为活跃。当从cookie加载之后，Sesson会变成不活跃状态。
+
+⑤保护视图
+
+API：flask_login.login_required
+
+解析：如果你将这个装饰器放在视图上，它会保证你的当前用户是登录状态，并且在调用实际视图之前进行认证。
+如果当前用户不是系统认证的登录状态，它将调用LoginManager.unauthorized回调。
+
+API：flask_login.fresh_login_required
+
+解析：如果用这个装饰器放在视图上，它将确保当前用户是活跃登录的。用户的Session不是从'remember me'的cookie中加载的。
+
+敏感的操作，例如修改密码或者邮箱，应该用这个装饰器保护，来阻止cookie被盗取。
+如果用户没有认证，通常调用'LoginManager.unauthorized'。
+如果用户被认证了，但是缓存不是活跃登陆，它将会'LoginManager.needs_refresh'代替，而且你需要提供一个'LoginManager.refresh_view'。
+
+
+使用 flask-login 验证用户登录需要数据库具备如下属性：
+
+is_authenticated
+id_active
+is_anonyous
+get_id()
+
+可以继承 UserMixin ，UserMixin 类中存在以上四种方法，如果你想重新定制你的用户类，那么请重写类中的方法
+如果仍想调用父类UserMixin中的方法，请使用super()语句
+
+current_user是在当前缓存中取出的用户实体，如果存在用户登录的缓存则返回实体，如果Session不存在则返回None
+
+@login_manager.user_loader，这个装饰器表示，每次有请求时，都会调用它所装饰的函数
+
+为什么区分活跃登录和非活跃登录？
+当用户需要修改用户信息，密码或是其他隐私信息的时候，防止你的PC被别人登录并恶意修改，或是其它人盗用你的缓存达到你不期望的一些恶意操作
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
