@@ -152,6 +152,63 @@ class Post(db.Model):
 
 多对多的关系目前还没有用到，用到之后还在这里做补充
 ##############
+多对多的关系，目前还不是很清楚的了解原理，只能说些简单的表述
+
+多不多首先需要建一个表，这个表就是一张表，不要把它当做可以实例化的对象
+两侧可以对应你其他表中相应的字段
+
+下面举个例子，我实际的写的，例子中删掉了一些，只留下了重点，
+
+#中间表，一侧对应用户的id，一侧对应博客的唯一的字段，不知道这里为什么用 user.id 和 post.num，使用没有报错，其他的会报错
+
+followers = db.Table('followers',
+    db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('followed_id', db.String(64), db.ForeignKey('post.num'))
+)
+
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), index=True, unique=True)
+    nickname = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    password_hash = db.Column(db.String(128))
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
+    about_me = db.Column(db.String(140))
+    last_seen = db.Column(db.DateTime)
+
+    #第一个参数为对不对对应的第二个表，第二个参数是关联表，第三个参数可以为第一个表的复数形式，别问我为什么这样写，我也不知道
+    #多对多关系仍使用定义一对多关系的 db.relationship() 方法进行定义，但在多对多关系中，
+    #必须把 secondary 参数设为关联表。多对多关系可以在任何一个类中定义， backref 参数会处理好关系的另一侧。关联表就是一个简单的表，
+    #不是模型，SQLAlchemy 会自动接管这个表。
+    
+    参考文章，我百度搜索的前三篇，基本没什么大的区别，可以作为参考
+    https://blog.csdn.net/ying847782627/article/details/51333090
+    https://blog.csdn.net/pythonkiddz/article/details/60963348
+    https://www.cnblogs.com/zhongshuiping/p/8655705.html
+    
+    followed = db.relationship('Post',
+                               secondary=followers,
+                               backref=db.backref('users', lazy='dynamic'),
+                               lazy='dynamic')
+
+    dis_authenticated = True
+    is_active = True
+    is_anonymous = False
+
+    def __repr__(self):
+        return '<User %r' % (self.username)
+
+class Post(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(140), unique=True)
+    timestamp = db.Column(db.DateTime)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    title = db.Column(db.String(64), unique=True)
+    num = db.Column(db.String(64),unique=True)
+
+    def __repr__(self):
+        return '<Post %r>' % (self.title)
 
 ##############
 
