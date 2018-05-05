@@ -15,3 +15,21 @@ class RegistrationForm(FlaskForm):
     nickname = StringField('Nickname', validators=[DataRequired(u"请输入需要注册的邮箱")])
     password = PasswordField('Password', validators=[DataRequired(u"请输入密码")])
     password2 = PasswordField('Repeat Password', validators=[DataRequired(u"请再一次输入密码"), EqualTo('password')])
+    
+    
+    
+flask中flash的样式
+参考文章：https://zhuanlan.zhihu.com/p/23374605
+
+以下是Bootstrap的用法
+html中添加：
+
+        {% for message in  get_flashed_messages(with_categories=True) %}
+            <div class="alert alert-{{ message[0] }}">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{ message[1] }}
+            </div>
+        {% endfor %}
+  
+在view中的 flash(u'恭喜你，账号注册成功','success')
+后面的参数有四种，分别代表四种颜色，分别为 success  info  waring  danger
