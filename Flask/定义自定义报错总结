@@ -5,6 +5,14 @@ login_manage 的定义错误
 lm = LoginManager()
 lm.login_message=u'对不起，您还没有登录'
 
+在html中的使用：
+    {% for message in  get_flashed_messages(with_categories=True) %}
+        <div class="alert alert-{{ message[0] }}">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message[1] }}
+        </div>
+    {% endfor %}
+
 flask的form表单报错
 
 from flask_wtf import FlaskForm
@@ -16,7 +24,16 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired(u"请输入密码")])
     password2 = PasswordField('Repeat Password', validators=[DataRequired(u"请再一次输入密码"), EqualTo('password')])
     
-    
+不明白放在 errors 前后的区别，那个好使用哪个
+
+{% for error in form.errors.content %}
+<span style="color: red">{{ error }}</span>
+{% endfor %}
+
+{% for form_error in form.password.errors %}
+<span style="color: red">{{ form_error }}</span>
+{% endfor %}
+
     
 flask中flash的样式
 参考文章：https://zhuanlan.zhihu.com/p/23374605
@@ -33,3 +50,32 @@ html中添加：
   
 在view中的 flash(u'恭喜你，账号注册成功','success')
 后面的参数有四种，分别代表四种颜色，分别为 success  info  waring  danger
+
+
+格式化时间，本想是在数据库中插入时间戳，然后再使用是在转换为日期，没有找到合适的用法，sql的数据库报错只接受datetime类型
+所以还是使用 datetime.utcnow() 插入到数据库，使用的时候使用 flask_Moment 来进行格式化
+
+初始化 moment
+
+from flask_moment import Moment
+moment = Moment(app)
+
+在 base.html最后加入
+注释了 super ，文章是在网上看的，注释掉了super之后成功，zh-CN是支持中文
+{% block scripts %}
+{#{{ super() }}#}
+    {{ moment.include_moment() }}
+    {{ moment.lang("zh-CN")  }}
+{% endblock %}
+
+在指定模板中的使用方法
+当前时间：{{moment(current_time).format('YYYY年M月D日, h:mm:ss a')}}
+初始化访问时间:{{moment(current_time).fromNow(refresh=True)}}
+
+
+
+
+
+
+
+
