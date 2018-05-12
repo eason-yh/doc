@@ -49,7 +49,7 @@ html中添加：
         {% endfor %}
   
 在view中的 flash(u'恭喜你，账号注册成功','success')
-后面的参数有四种，分别代表四种颜色，分别为 success  info  waring  danger
+后面的参数有四种，分别代表四种颜色，分别为 success  info  warning  danger
 
 
 格式化时间，本想是在数据库中插入时间戳，然后再使用是在转换为日期，没有找到合适的用法，sql的数据库报错只接受datetime类型
