@@ -1,0 +1,51 @@
+格式化磁盘并挂载
+fdisk -l
+
+fdisk /dev/vdb
+
+mkfs.ext4 /dev/vdb
+
+mkdir /app_logs
+
+mount /dev/vdb /app_logs
+
+echo "/dev/vdb                /app_logs                ext4    defaults        0 0" >>/etc/fstab 
+
+mkdir /app_logs
+
+sed  -n  '/25\/Apr\/2018:00:00:00 +0800/,$p' 2018-04-25-14-access.log
+截取某一时间到结尾的日志
+
+sed -n '/2010-11-17 09:25:55/,/2010-11-17 09:25:55/p'  logfile
+截取某一时间段内的日志
+这样可以精确地截取出来某个时间段的日志。
+但是问题又来了，由于日志文件巨大，不能去vi打开文件。
+根据之前看到过的日志格式，使用正则表达式。
+sed -n ‘/2010-11-17 09:[0-9][0-9]:[0-9][0-9]/,/2010-11-17 16:[0-9][0-9]:[0-9][0-9]/p’  logfile
+
+sed -n '/2018-04-27 14:51:10/,/2018-04-27 15:07:16/p'  logfile
+
+grep "2018-04-27" 2018-04-29-1.log |awk -F '[ :]' '$3==15{print $0}'|less
+
+awk -F '[ :]' '$3==15&&$4==07{print $0}'|less
+
+sed  -n  '10\/May\/2018:10:00:00 +0800/,$p' 2018-04-25-14-access.log
+
+nginx做反向代理的 websocket 
+参数位置：location
+    proxy_set_header Upgrade $http_upgrade;  
+    proxy_set_header Connection "upgrade";
+    
+
+awk取值之后并复制
+awk -F '[ :]+' '$8==23 {print $10}' /tmp/eason/test.log|xargs -I {}  cp {} /tmp/eason/dao/
+
+
+
+
+
+
+
+
+
+
