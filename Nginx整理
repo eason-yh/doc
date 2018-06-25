@@ -1,0 +1,127 @@
+有些事情，好久不想，就会慢慢忘记了。
+
+在运维这个工作中也是这样的，如果你很久没有使用一个服务，那么就会忘记。
+再一次了解一边nginx，这次属于全面的了解，通过 tengine 这个淘宝开源的 nginx 中文文档了解。
+
+开头是介绍对 nginx 源码的解释，真的是晦涩难懂，直接看目前对我来说最大价值化的地方吧。
+
+nginx 的安装，这里的安装指的是编译安装，如果喜欢使用 yum 安装的，请在 linux 服务器下使用 yum instll nginx ，记得安装依赖。。。。
+请去官方网站下载安装包，版本随你喜欢而选择，我一般如果自己搭建都是喜欢安装最新的，不过你也可以选择安装最稳当的版本--Stable version
+官方网站下载地址：https://nginx.org/en/download.html
+
+wget http://nginx.org/download/nginx-1.2.0.tar.gz
+tar zxvf nginx-1.2.0.tar.gz
+cd nginx-1.2.0
+./configure
+make
+make install
+
+按照以上命令，Nginx将被默认安装到/usr/local/nginx目录下。用户可以通过./configure –help命令查看Nginx可选择的编译选项进行自定义安装配置。
+Nginx的configure脚本支持以下选项: 
+--prefix=<PATH> #Nginx安装路径。如果没有指定，默认为 /usr/local/nginx
+--sbin-path=<PATH> #Nginx可执行文件安装路径。只能安装时指定，如果没有指定，默认为<prefix>/sbin/nginx
+--conf-path=<PATH> #在没有给定-c选项下默认的nginx.conf的路径。如果没有指定，默认为<prefix>/conf/nginx.conf
+--pid-path=<PATH> #在nginx.conf中没有指定pid指令的情况下，默认的nginx.pid的路径。如果没有指定，默认为 <prefix>/logs/nginx.pid
+--lock-path=<PATH> #nginx.lock文件的路径
+--error-log-path=<PATH> #在nginx.conf中没有指定error_log指令的情况下，默认的错误日志的路径。如果没有指定，默认为 <prefix>/logs/error.log
+--http-log-path=<PATH> #在nginx.conf中没有指定access_log指令的情况下，默认的访问日志的路径。如果没有指定，默认为 <prefix>/logs/access.log。
+--user=<USER> #在nginx.conf中没有指定user指令的情况下，默认的nginx使用的用户。如果没有指定，默认为 nobody
+--group=<GROUP> #在nginx.conf中没有指定user指令的情况下，默认的nginx使用的组。如果没有指定，默认为 nobody
+--builddir=DIR #指定编译的目录
+--with-rtsig_module #启用 rtsig 模块
+--with-select_module(--without-select_module) #允许或不允许开启SELECT模式，如果configure没有找到合适的模式，比如，kqueue(sun os)、epoll(linux kenel 2.6+)、rtsig(实时信号)或/dev/poll（一种类似select的模式，底层实现与SELECT基本相同，都是采用轮询的方法），SELECT模式将是默认安装模式
+--with-poll_module(--without-poll_module) #允许或不允许开启POLL模式，如果没有合适的模式，比如：kqueue（sun os）、epoll（liunx kernel 2.6+），则开启该模式
+--with-http_ssl_module #开启HTTP SSL模块，使NGINX可以支持HTTPS请求。这个模块需要已经安装了OPENSSL，在DEBIAN上是libssl
+--with-http_realip_module #启用 ngx_http_realip_module
+--with-http_addition_module #启用 ngx_http_addition_module
+--with-http_sub_module #启用 ngx_http_sub_module
+--with-http_dav_module #启用 ngx_http_dav_module
+--with-http_flv_module #启用 ngx_http_flv_module
+--with-http_stub_status_module #启用 "server status" 页
+--without-http_charset_module #禁用 ngx_http_charset_module
+--without-http_gzip_module #禁用 ngx_http_gzip_module. 如果启用，需要 zlib 。
+--without-http_ssi_module #禁用 ngx_http_ssi_module
+--without-http_userid_module #禁用 ngx_http_userid_module
+--without-http_access_module #禁用 ngx_http_access_module
+--without-http_auth_basic_module #禁用 ngx_http_auth_basic_module
+--without-http_autoindex_module #禁用 ngx_http_autoindex_module
+--without-http_geo_module #禁用 ngx_http_geo_module
+--without-http_map_module #禁用 ngx_http_map_module
+--without-http_referer_module #禁用 ngx_http_referer_module
+--without-http_rewrite_module #禁用 ngx_http_rewrite_module. 如果启用需要 PCRE 。
+--without-http_proxy_module #禁用 ngx_http_proxy_module
+--without-http_fastcgi_module #禁用 ngx_http_fastcgi_module
+--without-http_memcached_module #禁用 ngx_http_memcached_module
+--without-http_limit_zone_module #禁用 ngx_http_limit_zone_module
+--without-http_empty_gif_module #禁用 ngx_http_empty_gif_module
+--without-http_browser_module #禁用 ngx_http_browser_module
+--without-http_upstream_ip_hash_module #禁用 ngx_http_upstream_ip_hash_module
+--with-http_perl_module #启用 ngx_http_perl_module
+--with-perl_modules_path=PATH #指定 perl 模块的路径
+--with-perl=PATH #指定 perl 执行文件的路径
+--http-log-path=PATH #指定http默认访问日志的路径
+--http-client-body-temp-path=PATH #指定http客户端请求缓存文件存放目录的路径
+--http-proxy-temp-path=PATH #指定http反向代理缓存文件存放目录的路径
+--http-fastcgi-temp-path=PATH #指定http FastCGI缓存文件存放目录的路径
+--without-http #禁用 HTTP server
+--with-mail #启用 IMAP4/POP3/SMTP 代理模块
+--with-mail_ssl_module #启用 ngx_mail_ssl_module
+--with-cc=PATH #指定 C 编译器的路径
+--with-cpp=PATH #指定 C 预处理器的路径
+--with-cc-opt=OPTIONS #设置C编译器的额外选项
+--with-ld-opt=OPTIONS #设置链接的额外选项
+--with-cpu-opt=CPU #为特定的 CPU 编译，有效的值包括：pentium, pentiumpro, pentium3, pentium4, athlon, opteron, amd64, sparc32, sparc64, ppc64
+--without-pcre #禁止 PCRE 库的使用。同时也会禁止 HTTP rewrite 模块。在 "location" 配置指令中的正则表达式也需要 PCRE
+--with-pcre=DIR #指定 PCRE 库的源代码的路径
+--with-pcre-opt=OPTIONS #设置PCRE的额外编译选项
+--with-md5=DIR #使用MD5汇编源码
+--with-md5-opt=OPTIONS #设置MD5库的额外编译选项
+--with-md5-asm #使用MD5汇编源码
+--with-sha1=DIR #设置sha1库的源代码路径
+--with-sha1-opt=OPTIONS #设置sha1库的额外编译选项
+--with-sha1-asm #使用sha1汇编源码
+--with-zlib=DIR #设置zlib库的源代码路径
+--with-zlib-opt=OPTIONS #设置zlib库的额外编译选项
+--with-zlib-asm=CPU #zlib针对CPU的优化，合法的值是: pentium, pentiumpro
+--with-openssl=DIR #设置OpenSSL库的源代码路径
+--with-openssl-opt=OPTIONS #设置OpenSSL库的额外编译选项
+--with-debug #启用调试日志
+--add-module=PATH #添加一个在指定路径中能够找到的第三方模块
+
+这么多的编译参数，我没有用过这么多，下面我会把常用的一些和用法记录在下面：
+
+#######################
+
+
+
+
+##########################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
