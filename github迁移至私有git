@@ -1,0 +1,28 @@
+公司之前的代码是放在了Github上的，需要迁移到私有的Git
+参考文章
+http://www.cnblogs.com/fly_dragon/p/8718614.html
+文章写的很详细，但是在按照步骤搭建的过程中还是出现了一些小的问题
+
+搭建和安装git的时候还是很简单的。
+
+1：git的家目录加在哪里都是可以的，只需要更改git用户家目录的路径即可，注意一定要把所有的环境变量拷贝过来， 以 . 开头的是重点的拷贝对象
+
+2：安装过程中经过测试发现，将git的环境变量加在 /etc/profile 下，通过客户端使用 git clone 进行远程仓库的克隆，提示远程仓库不存在和没有权限。
+然后将git的环境变量加在 /etc/baserc 下。在进行克隆是成功的
+
+3，对ssh权限的更改，有的文章中表示需要将ssh的配置文件进行更改，才能使用密钥来登录，经过在Centos6.9下的测试，开启和关闭都对于ssh的key登录没有影响，
+对git克隆代码也没有影响，如果你找不到克隆失败的原因或者无法使用key进行登录，可以开启key的选项，将前面的注释#号删掉：
+#RSAAuthentication yes
+#PubkeyAuthentication yes
+#AuthorizedKeysFile     .ssh/authorized_keys
+
+4，在配置gitolite的admin的key的时候，可以使用root下的ssh公钥当作管理员的公钥，这样以后调整起来的时候会很方便，注册时候请使用命令添加邮箱之后在生成
+key，这样可以避免警告信息的出现
+
+配置过程中发现，安装gitolite管理工具之后，还是使用管理工具配置git仓库比较好，可以为帐号直接授权。
+如果想要把所有的的github或者gitlab上的分支可commit信息迁移到新的git库，需要使用git命令来进行配置
+首先使用git clone 克隆下原代码
+如果有多个分支，需要进入到源代码目录下进程分支切换，git checkout 分支
+如果不切换分支，上传之后是没有分支的，只有master，一定要将所有的分支切换到
+然后使用 git push --mirror git@xxx.xxx.xxx.xxx:仓库名
+这样克隆下来的新库就可以看到分支已经存在了
