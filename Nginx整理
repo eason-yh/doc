@@ -29,7 +29,8 @@ Nginx的configure脚本支持以下选项:
 --group=<GROUP> #在nginx.conf中没有指定user指令的情况下，默认的nginx使用的组。如果没有指定，默认为 nobody
 --builddir=DIR #指定编译的目录
 --with-rtsig_module #启用 rtsig 模块
---with-select_module(--without-select_module) #允许或不允许开启SELECT模式，如果configure没有找到合适的模式，比如，kqueue(sun os)、epoll(linux kenel 2.6+)、rtsig(实时信号)或/dev/poll（一种类似select的模式，底层实现与SELECT基本相同，都是采用轮询的方法），SELECT模式将是默认安装模式
+--with-select_module(--without-select_module) #允许或不允许开启SELECT模式，如果configure没有找到合适的模式，比如，kqueue(sun os)、epoll
+(linux kenel 2.6+)、rtsig(实时信号)或/dev/poll（一种类似select的模式，底层实现与SELECT基本相同，都是采用轮询的方法），SELECT模式将是默认安装模式
 --with-poll_module(--without-poll_module) #允许或不允许开启POLL模式，如果没有合适的模式，比如：kqueue（sun os）、epoll（liunx kernel 2.6+），则开启该模式
 --with-http_ssl_module #开启HTTP SSL模块，使NGINX可以支持HTTPS请求。这个模块需要已经安装了OPENSSL，在DEBIAN上是libssl
 --with-http_realip_module #启用 ngx_http_realip_module
@@ -89,9 +90,12 @@ Nginx的configure脚本支持以下选项:
 --add-module=PATH #添加一个在指定路径中能够找到的第三方模块
 
 这么多的编译参数，我没有用过这么多，下面我会把常用的一些和用法记录在下面：
-
+依赖：pcre pcre-devel openssl openssl-devel zlib zlib-devel 
 #######################
+可以省略的一些参数：
 
+./configure --prefix=path=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --with-pcre --with-zlib \
+--with-http_stub_status_module
 
 
 
