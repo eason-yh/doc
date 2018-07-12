@@ -1,17 +1,17 @@
 格式化磁盘并挂载
 fdisk -l
-
 fdisk /dev/vdb
-
 mkfs.ext4 /dev/vdb
-
 mkdir /app_logs
-
 mount /dev/vdb /app_logs
-
 echo "/dev/vdb                /app_logs                ext4    defaults        0 0" >>/etc/fstab 
-
 mkdir /app_logs
+
+curl -I --connect-timeout 10 IP：端口 -s |grep "200"|wc -l
+-I 状态
+--connect-timeout 连接超时
+-s 只输出指定的值
+
 
 sed  -n  '/25\/Apr\/2018:00:00:00 +0800/,$p' 2018-04-25-14-access.log
 截取某一时间到结尾的日志
