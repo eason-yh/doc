@@ -40,12 +40,15 @@ nginx做反向代理的 websocket
 awk取值之后并复制
 awk -F '[ :]+' '$8==23 {print $10}' /tmp/eason/test.log|xargs -I {}  cp {} /tmp/eason/dao/
 
-
-
-
-
-
-
-
-
-
+喜欢的网站
+http://blog.51cto.com/steed/2055643
+http://blog.51cto.com/nmshuishui/1573941
+https://docs.docker.com/get-started/part2/#log-in-with-your-docker-id
+https://www.cnblogs.com/gaoyuechen/p/7911050.html
+http://tools.sharejs.com/unixtime.html
+http://blog.51cto.com/lizhenliang/2095526
+https://www.zhihu.com/question/21438053
+https://blog.csdn.net/u012340794/article/details/71440604
+http://blog.51cto.com/11010461/2120795
+http://blog.51cto.com/qidian510/2120017
+http://blog.51cto.com/steed/2044666
