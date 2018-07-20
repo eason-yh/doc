@@ -1,0 +1,101 @@
+在Centos6服务器下面安装Let's Encrypt
+
+服务器必须安装有nginx服务，并在nginx下配有网站目录和域名
+
+服务器下创建一个目录 test
+在test目录中执行如下命令：
+wget https://dl.eff.org/certbot-auto
+chmod a+x certbot-auto
+
+创建一个文件：demo.com.conf
+文件中内容如下：
+domains = demo.com
+rsa-key-size = 3072
+email = demo@demo.com
+text = True
+
+authenticator = webroot
+webroot-path = /var/www/html
+
+domains和emai需要改成自己的域名以及用于从Let’s Encrypt接收证书信息的邮箱，rsa-key-size推荐使用2048或者3072
+
+配置完之后执行如下命令：
+./certbot-auto -c demo.com.conf certonly
+
+之后会出现一些英文信息：
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Plugins selected: Authenticator webroot, Installer None
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Please read the Terms of Service at
+https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf. You must
+agree in order to register with the ACME server at
+https://acme-v02.api.letsencrypt.org/directory
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(A)gree/(C)ancel: A
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Would you be willing to share your email address with the Electronic Frontier
+Foundation, a founding partner of the Let's Encrypt project and the non-profit
+organization that develops Certbot? We'd like to send you email about our work
+encrypting the web, EFF news, campaigns, and ways to support digital freedom.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(Y)es/(N)o: Y                   
+Obtaining a new certificate
+Performing the following challenges:
+http-01 challenge for .com
+Using the webroot path /nginx/vhost/Test for all unmatched domains.
+Waiting for verification...
+Cleaning up challenges
+
+IMPORTANT NOTES:
+ - Congratulations! Your certificate and chain have been saved at:
+   Let's Encrypt/fullchain.pem
+   Your key file has been saved at:
+   /etc/letsencrypt/live/.com/privkey.pem
+   Your cert will expire on 2018-10-18. To obtain a new or tweaked
+   version of this certificate in the future, simply run certbot-auto
+   again. To non-interactively renew *all* of your certificates, run
+   "certbot-auto renew"
+ - Your account credentials have been saved in your Certbot
+   configuration directory at /etc/letsencrypt. You should make a
+   secure backup of this folder now. This configuration directory will
+   also contain certificates and private keys obtained by Certbot so
+   making regular backups of this folder is ideal.
+ - If you like Certbot, please consider supporting our work by:
+
+   Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
+   Donating to EFF:                    https://eff.org/donate-le
+   
+   
+   
+如上出现 - Congratulations 证明注册证书成功
+证书文件位置：/etc/letsencrypt/live/xxx.com/
+
+之后就是配置nginx的https跳转了
+
+证书续费执行命令：./certbot-auto renew
+申请的证书为3个月的有效期，如果未到期执行会出现提示证书未到期，可以提前申请续期，但是时间不要差太长
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Processing /etc/letsencrypt/renewal/eason.jiutongpay.com.conf
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Cert not yet due for renewal
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+The following certs are not due for renewal yet:
+  /etc/letsencrypt/live/eason.jiutongpay.com/fullchain.pem expires on 2018-10-18 (skipped)
+No renewals were attempted.
+
+证书安装参考资料：
+https://blog.csdn.net/putative/article/details/78702137
+https://blog.csdn.net/qingtian2002/article/details/53691600
+
+证书续期参考资料：
+https://blog.csdn.net/Trustauth/article/details/78423242
+
+
+
+
