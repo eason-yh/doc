@@ -1,4 +1,4 @@
-最近接手了一个AWS的项目，需求为定时做快照
+最近接手了一个项目，运行在AWS的云上，需求为定时做快照，系统全部为centos7
 经过调研，找到3种方法，第一种是通过AWS的CloudWatch，第二种是通过脚本的方式进行，第三种是AWS的boot方式，下面一一介绍
 
 第一种方式是通过AWS的CloudWatch的事件，创建规则选择计划，然后在固定频率中选择合适的时间，之后再目标里面选择EC2 Create Snapshot API调用选项，填写卷（
@@ -7,7 +7,101 @@
 优点：上手简单，配置简单
 缺点：支持的功能简单，没有定时删除快照的选项，需要手动删除，需要对每一台机器单独添加规则
 
-第二种方式是通过脚本，在IAM中创建一个用户，这里起的名字是Backup-snapshot，访问类型选择编程访问，设置权限中选择直接附加现有策略，在策略中选择
-AdministratorAccess，之后点击创建用户，然后会生成一个访问密钥ID，和访问密钥，注意范文密钥只会显示这一次，之后就不在显示，如果没有记录好，下一次使用
+第二种方式是通过脚本实现创建快照。
+在IAM中创建一个用户，名字为Backup-snapshot，访问类型选择编程访问，设置权限中选择直接附加现有策略，在策略中选择AdministratorAccess，
+之后点击创建用户，然后会生成一个访问密钥ID，和访问密钥，注意访问密钥只会显示这一次，之后就不在显示，如果没有记录好，下一次使用
 只能在用户，安全证书下创建新的访问密钥，忘记的只能删除掉
-余下的操作步骤基本是在服务器端完成了，首先在服务器端安装aws的命令，
+优点：只需要在一台服务器上安装就可以对所有的卷做快照，可以在创建快照的同时添加更多的内容，标签信息或者描述，以后可以更直观和快捷的找到需要的快照
+  可以定时删除多余的快照，因为是命令行的方式，可以结合更多的实际情况配合不同的服务使用，如S3，RDS
+缺点：相对于CloudWatch有些复杂
+
+余下的操作步骤基本是在服务器端完成了
+1，安装pip
+  yum -y install epel-release
+  yum install python-pip
+  pip install --upgrade pip
+
+2，安装aws命令
+  pip install awscli
+  
+3，安装完命令之后
+  aws --version #查看版本号，检验是否安装成功
+  aws configure 会一次让你输入访问密钥id，访问密钥，服务器所在区，输出格式，默认为json，服务器所在区只需要填写大区，例如：ap-southeast-1a，只
+  需要输入，ap-southeast-1
+  
+  配置完毕之后，可以运行以下命令查看是否可以回去到用户的实例名称：aws ec2 describe-instances | awk -F\" '/InstanceId/{print $4}'
+  如果在定时任务中执行，脚本中请补全aws至绝对路径，否则因为环境变量导致找不到aws命令
+  
+  之后只需要将脚本编辑到指定的文件，并放入定时任务中执行，脚本如下：
+  #!/bin/bash
+#create ec2 ebs snapshot per week.
+#PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+log_dir=/tmp/ec2-snapshot/
+[ -d ${log_dir} ] || mkdir -p ${log_dir}
+#获取到用户名
+aws_user=$(/root/.local/bin/aws iam get-user | awk -F\" '/UserName/{print $4}')
+#获取实例id
+for instance_id in $(/root/.local/bin/aws ec2 describe-instances | awk -F\" '/InstanceId/{print $4}') ; do
+    #获取实例标签名
+    tag=$(/root/.local/bin/aws ec2 describe-instances --instance-ids ${instance_id} | grep -C1 "\"Key\": \"Name\"" | awk -F\" '/Value/{print $4}')
+    #通过实例id获取该实例挂载的卷id
+    volumes=$(/root/.local/bin/aws ec2 describe-instances --instance-ids  ${instance_id} | awk -F\" '/VolumeId/{print $4}')
+    #通过卷id创建快照
+    for volume in $volumes ; do 
+        /root/.local/bin/aws ec2 create-snapshot \
+        --volume-id $volume \
+        --description "$(date +%F\ %T) UTC create snapshot for $tag $volume by $aws_user on host: $(whoami)@$(hostname)" \
+        &>> ${log_dir}create-snapshot-history.log
+        #获取快照id
+        snap_shotId=$(tail -11 ${log_dir}create-snapshot-history.log | awk -F\" '/SnapshotId/{print $4}')
+        sleep 10
+        #创建快照标签名字，实例标签_时期
+        /root/.local/bin/aws ec2 create-tags --resources ${snap_shotId} --tags Key=Name,Value=${tag}_${volume}_$(date +%Y%m%d)
+        echo ${snap_shotId} >> ${log_dir}$volume.log
+        #判断每个卷的快照数，大于7个,删除超过7个的最久的快照
+        num_snap=$(wc -l ${log_dir}$volume.log | awk '{print $1}')
+        if [ ${num_snap} -gt 7 ] ;then
+            old_snapshotid=$(head -$[${num_snap}-3] ${log_dir}$volume.log)
+            for delid in ${old_snapshotid} ;do
+                /root/.local/bin/aws ec2 delete-snapshot --snapshot-id ${delid} >> ${log_dir}del-snapshot-error.log
+                sed -i '/'"$delid"'/d' ${log_dir}$volume.log
+            done
+        fi
+    done
+  done
+  #删除已不存在卷的历史自动快照，不影响手动快照
+  #获取现有卷列表
+  #vol_n=$(aws ec2 describe-instances | awk -F\" '/VolumeId/{print $4}')
+  #cd ${log_dir}
+  #for vol_log in vol-*.log ; do
+  #    #历史卷id
+  #    vol_id=${vol_log%.log}
+  #    #判断历史卷id是否在现有卷列表中，不存在则删除这个卷的所有快照
+  #    if [ "${vol_n}" == "${vol_n/${vol_id}/#}" ] ; then
+  #        while read sanp_his ; do
+  #            aws ec2 delete-snapshot --snapshot-id ${sanp_his} 2>> ${log_dir}del-snapshot-error.log
+  #        done < ${vol_log}
+  #        rm -f ${vol_log}
+  #    fi
+  #done
+  
+第一种方案，参考文档：https://www.cnblogs.com/syaving/p/9118816.html
+第二种方案，参考文档：https://aws.amazon.com/cn/cli/
+第三种方案，参考文档：http://blog.51cto.com/daibaiyang119/2144485?source=dra
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
