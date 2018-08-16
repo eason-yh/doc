@@ -91,7 +91,7 @@ for instance_id in $(/root/.local/bin/aws ec2 describe-instances | awk -F\" '/In
 第三种方案，参考文档：http://blog.51cto.com/daibaiyang119/2144485?source=dra
 
 
-
+快照恢复，将原有的EC2停止，断开与卷的连接，原有快照创建成卷，然后与新的卷连接，硬盘名称改为sda1，启动EC2.完成
 
 
 
