@@ -1,0 +1,72 @@
+依赖部分
+yum  install epel-release -y
+
+yum install libxml2 libxml2-devel bzip2-devel libcurl-devel gcc -y
+
+yum install openssl openssl-devel libxslt-devel gcc-c++ -y
+
+yum install libjpeg-devel libpng-devel freetype-devel libicu-devel -y
+
+yum install libmcrypt libmcrypt-devel -y
+
+Php版本：5.5.38
+./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc \
+--enable-inline-optimization \
+--disable-debug \
+--disable-rpath \
+--enable-shared \
+--enable-opcache \
+--enable-fpm \
+--enable-bcmath \
+--enable-soap \
+--enable-mbstring \
+--enable-pcntl \
+--enable-shmop \
+--enable-sysvmsg \
+--enable-sysvsem \
+--enable-sysvshm \
+--enable-sockets \
+--enable-zip \
+--enable-libxml \
+--enable-session \
+--enable-ftp \
+--enable-intl \
+--with-iconv \
+--with-mcrypt \
+--with-mhash \
+--with-openssl \
+--with-mysql \
+--with-mysqli \
+--with-pdo-mysql \
+--with-gettext \
+--with-libxml-dir \
+--with-curl \
+--with-zlib \
+--with-bz2 \
+--with-gd \
+--with-freetype-dir \
+--with-jpeg-dir \
+--with-png-dir \
+--with-xmlrpc \
+--with-xsl 
+
+make && make install
+
+安装扩展redis
+
+wget http://pecl.php.net/get/redis-2.2.5.tgz
+解压，/usr/local/php/bin/phpize
+./configure --with-php-config=/usr/local/php/bin/php-config
+
+在php.ini配置文件的结尾加入：extension=redis.so
+
+zend_extension = ZendGuardLoader.so
+zend_loader.enable = 1
+zend_loader.disable_licensing = 0
+zend_loader.obfuscation_level_support = 3
+make && make install
+
+ngin的简单编译
+
+./configure --prefix=/usr/local/nginx --user=www --group=www --prefix=/usr/local/nginx --with-http_stub_status_module \
+--with-http_ssl_module --with-http_v2_module --with-http_gzip_static_module --with-ipv6 --with-http_sub_module --with-openssl
