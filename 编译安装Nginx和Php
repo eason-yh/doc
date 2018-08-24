@@ -60,6 +60,8 @@ wget http://pecl.php.net/get/redis-2.2.5.tgz
 
 在php.ini配置文件的结尾加入：extension=redis.so
 
+配置Zend Guard loader扩展
+参考：https://www.cnblogs.com/XIANIAN/p/7076130.html
 zend_extension = ZendGuardLoader.so
 zend_loader.enable = 1
 zend_loader.disable_licensing = 0
@@ -70,3 +72,5 @@ ngin的简单编译
 
 ./configure --prefix=/usr/local/nginx --user=www --group=www --prefix=/usr/local/nginx --with-http_stub_status_module \
 --with-http_ssl_module --with-http_v2_module --with-http_gzip_static_module --with-ipv6 --with-http_sub_module --with-openssl
+
+
