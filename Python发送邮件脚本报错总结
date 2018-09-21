@@ -1,3 +1,11 @@
 Google邮箱错误
 
-https://blog.csdn.net/qianghaohao/article/details/79331895
+smtplib.SMTPAuthenticationError: (534, '5.7.14 
+解决方法：
+允许不够安全的应用使用您的账号:点击如下链接，开启“允许不够安全的应用”功能 https://myaccount.google.com/lesssecureapps 
+
+解除gmail验证码认证: 
+点击如下链接，然后点击继续即可 
+https://accounts.google.com/b/0/displayunlockcaptcha 
+
+参考文章：https://blog.csdn.net/qianghaohao/article/details/79331895
