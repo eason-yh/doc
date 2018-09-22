@@ -47,6 +47,47 @@ local2.*    /var/log/haproxy.log
 7 emerg       –内核崩溃等严重信息
 
 
+域名只支持http模式，不支持tcp模式
+
+配置域名需要由前端代理到后端
+frontend web_in
+    mode http
+    maxconn 1000
+    bind :9005
+    acl is_a hdr_beg(host) -i quote.qhinom.com
+    use_backend a_server if is_a
+
+backend a_server
+    mode http
+    balance roundrobin
+    option  httpclose
+    server web01 13.251.86.16:9005 check inter 2000 fall 1 rise 2 weight 25
+    server web02 13.251.22.173:9005 check inter 2000 fall 1 rise 2 weight 25
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
