@@ -1,0 +1,53 @@
+安装部分
+官网下载haproxy
+yum install gcc -y
+tar xzvf haproxy-1.7.10.tar.gz
+可以取消：  mv xzvf haproxy-1.7.10 /usr/local/haproxy && cd /usr/local/haproxy
+
+make TARGET=linux26  #标识64位操作系统
+make install
+
+mkdir /etc/haproxy   #配置文件放在此文件夹下
+groupadd haproxy && useradd -s /sbin/nologin -M -g haproxy haproxy
+
+创建配置文件 haproxy.cfg
+
+配置文件可以参考以下文章
+https://www.linuxidc.com/Linux/2018-04/151871.htm
+https://blog.csdn.net/u012758088/article/details/78643704
+
+后端检测
+https://blog.csdn.net/yujin2010good/article/details/72872224
+
+日志操作
+https://www.cnblogs.com/dkblog/archive/2012/03/13/2393321.html
+
+
+haproxy -f haproxy.cfg #检测配置文件
+
+开机启动项：haproxy/examples/haproxy.init
+注意修改配置文件中的内容，其中 BIN要与haproxy命令的路径相同，配置文件一样
+BIN=/usr/local/sbin/$BASENAME
+CFG=/etc/$BASENAME/$BASENAME.cfg
+
+将日志打印出来
+/etc/rsyslog.conf
+loca0必须以配置文件匹配
+local2.*    /var/log/haproxy.log
+
+日志的level: local0～local7 16～23保留为本地使用
+
+0debug       –有调式信息的，日志信息最多
+1 info        –一般信息的日志，最常用
+2 notice      –最具有重要性的普通条件的信息
+3 warning     –警告级别
+4 err         –错误级别，阻止某个功能或者模块不能正常工作的信息
+5 crit        –严重级别，阻止整个系统或者整个软件不能正常工作的信息
+6 alert       –需要立刻修改的信息
+7 emerg       –内核崩溃等严重信息
+
+
+
+
+
+
