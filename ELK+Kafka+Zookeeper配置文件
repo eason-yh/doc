@@ -1,0 +1,89 @@
+CentOS7 安装 Filebeat
+https://blog.csdn.net/jeikerxiao/article/details/84841792
+
+yum CentOS 7 下安装 Kibana5
+https://blog.csdn.net/BianChengNinHao/article/details/80816867
+
+centos7 使用yum elasticsearch5.6 安装流程
+https://blog.csdn.net/BianChengNinHao/article/details/80832877
+
+ELK
+https://blog.csdn.net/BianChengNinHao/article/details/80832877
+https://blog.csdn.net/wfs1994/article/details/80556494
+https://www.jianshu.com/p/4bf5a8b743d2
+
+
+Elasticsearch 配置文件详解：  参考文档：https://www.cnblogs.com/xiaochina/p/6855591.html
+
+    config/elasticsearch.yml   主配置文件
+    config/jvm.options         jvm参数配置文件
+    cofnig/log4j2.properties   日志配置文件
+
+此次配置文件只改了  path.data 和 path.logs
+
+Logstash 配置文件详解：
+
+    配置文件更改，logstash.yml   path.data 和 path.logs
+    
+Kibana 配置文件下详解：   参考文档：https://blog.csdn.net/heatdeath/article/details/79531297
+
+    server.host: 0.0.0.0
+    elasticsearch.url: "http://localhsot:9200"
+    
+Kafka 配置文件详解：   参考文档：https://www.cnblogs.com/alan319/p/8651434.html
+
+    broker.id=-1
+    num.network.threads=3
+    num.io.threads=8
+    socket.send.buffer.bytes=10240000
+    socket.receive.buffer.bytes=10240000
+    socket.request.max.bytes=1048576000
+    message.max.bytes=100000000
+    queued.max.requests=1000
+    log.dirs=/data/kafka/kafkalogs
+    num.partitions=3
+    num.recovery.threads.per.data.dir=1
+    offsets.topic.replication.factor=1
+    transaction.state.log.replication.factor=1
+    transaction.state.log.min.isr=1
+    log.retention.hours=168
+    log.segment.bytes=1073741824
+    log.retention.check.interval.ms=300000
+    zookeeper.connect=localhost:2181
+    zookeeper.connection.timeout.ms=6000
+    group.initial.rebalance.delay.ms=0
+    advertised.port=9092
+    advertised.host.name=localhost
+    port=9092
+    
+Zookeeper 配置文件详解：  
+
+    tickTime=2000
+    initLimit=10
+    syncLimit=5
+    dataDir=/data/zk/zkdata
+    clientPort=2181
+    datalogDir=/data/zk/zklog
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
