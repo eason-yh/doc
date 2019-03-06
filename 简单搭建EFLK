@@ -11,3 +11,11 @@ ELK
 https://blog.csdn.net/BianChengNinHao/article/details/80832877
 https://blog.csdn.net/wfs1994/article/details/80556494
 https://www.jianshu.com/p/4bf5a8b743d2
+
+
+Elasticsearch 配置文件详解：
+
+  * config/elasticsearch.yml   主配置文件
+  * config/jvm.options         jvm参数配置文件
+  * cofnig/log4j2.properties   日志配置文件
+  
