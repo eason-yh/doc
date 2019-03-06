@@ -1,3 +1,14 @@
+常用几个命令
+查看 elasticsearch 的所有索引
+curl http://localhost:9200/_cat/indices?v
+
+从开始打印 kafka 中是否在存储日志
+kafka-console-consumer.sh --bootstrap-server 127.0.0.1:9092 --topic filebeats --from-beginning
+
+查看 zookeeper 中的所有订阅
+kafka-topics.sh --zookeeper 127.0.0.1:2181 --list
+
+
 版本，ELK版本中会存在版本不兼容的问题，所以最好使用别人做过的，或者按照我的来做
 
 elasticsearch-5.3.1.tar.gz
@@ -9,11 +20,11 @@ jdk-8u141-linux-x64.tar.gz
 kafka_2.11-2.1.1.tar
 zookeeper-3.4.10.tar.gz
 
-filebeat version 6.5.1  收集日志
+filebeat version 6.5.1  收集日志，主要安装在各个主机
 
 安装
 
-基本全部都是解压之后，然后放到指定目录下即可，不需要变异
+基本全部都是解压之后，然后放到指定目录下即可，不需要编译
 
 环境变量
 
@@ -24,32 +35,98 @@ export CLASSPATH=.:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/li
 export PATH=$PATH:$JAVA_HOME/bin:$ZK_HOME/bin:$KAFKA_HOME/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
-重要的主要是配置文件中
-自己详细写配置文件，然后放链接在这里
-kafka的配置文件
-broker.id=1
-num.network.threads=3
-num.io.threads=8
-socket.send.buffer.bytes=10240000
-socket.receive.buffer.bytes=10240000
-socket.request.max.bytes=1048576000
-message.max.bytes=100000000
-queued.max.requests=1000
-log.dirs=/data/kafka/kafkalogs
-num.partitions=3
-num.recovery.threads.per.data.dir=1
-offsets.topic.replication.factor=1
-transaction.state.log.replication.factor=1
-transaction.state.log.min.isr=1
-log.retention.hours=168
-log.segment.bytes=1073741824
-log.retention.check.interval.ms=300000
-zookeeper.connect=172.31.120.20:2181
-zookeeper.connection.timeout.ms=6000
-group.initial.rebalance.delay.ms=0
-advertised.port=9092
-advertised.host.name=172.31.120.20
-port=9092
+
+主要是需要 logstash 的配置文件和 filebeat 的配置文件
+
+input{
+    kafka { 
+        add_field  => {"myid" => "test1"}
+        bootstrap_servers => "xxx:9092"
+        codec => "json"
+        topics => ["test1"]
+    }
+    kafka { 
+        add_field => {"myid" => "test2"}
+        bootstrap_servers => "xxx:9092"
+        codec => "json"
+        topics => ["test2"]
+    }
+
+}
+
+filter {
+    if [fields][service] == "spring" {
+        if [message] =~ "__" {
+            grok {
+                match => {
+                    "message" => "(?<timestamp>\S+ \S+) (?<ip>\S+) (?<port>\S+) (?<service>\S+) (?<level>\S+) (?<operator>\d+)__(?<message>.*)"
+                    }
+                    overwrite => ["message"]
+                    add_field => { "type" => "spring" }
+                }
+        } else {
+            grok {
+                match => {
+                    "message" => "(?<timestamp>\S+ \S+) (?<ip>\S+) (?<port>\S+) (?<service>\S+) (?<level>\S+)  (?<message>.*)"
+                    }
+                overwrite => ["message"]
+                add_field => { "operator" => "system" }
+                add_field => { "type" => "spring" }
+                }
+        }
+        date {
+            match => ["timestamp", "yyyy-MM-dd HH:mm:ss.SSS"]
+            target => "@timestamp"
+            remove_field => ["timestamp", "offset"]
+        }
+    }
+}
+
+
+output{
+    if [myid] == "test1" {
+        elasticsearch {
+            hosts => ["xxx:9200"]
+            index => "test1-%{type}-%{service}-%{+YYYY.MM.dd}"
+            }
+    }
+    if [myid] == "test2" {
+        elasticsearch {
+            hosts => ["xxx:9200"]
+            index => "test2-%{type}-%{service}-%{+YYYY.MM.dd}"
+            }
+    }
+    
+
+  stdout{
+     codec => "rubydebug"
+    }
+}
+
+这个比较重要
+
+filebeat 的配置文件
+
+filebeat.prospectors:
+- input_type: log
+  enabled: true
+  paths:
+    - /mnt/logs/*/*.log
+  fields:
+    service: spring
+  multiline.pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}'
+  multiline.negate: true
+  multiline.match: after
+
+output.kafka:
+  enabled: true
+  hosts: ["xxx:9092"]
+  topic: "WaiPanMoNi"
+  partition.hash:
+    reachable_only: false
+  compression: gzip
+  max_message_bytes: 1000000
+  required_acks: 1
 
 
 
